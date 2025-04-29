@@ -1,76 +1,32 @@
-# This script filters images based on their sharpness using the Laplacian variance method.
-# It checks the center of each image and saves only the sharp images to a new folder.
-# Additionally, it detects duplicate images based on perceptual hashing and sorts sharp images into folders.
+# This script filters images based on their similarity using perceptual hashing.
+# It checks for duplicates and moves them to a separate folder, while also renaming the images.
+# It sorts the images into folders of 1000 images each, renaming them in the process.
 
-import cv2
 import os
 import shutil
 from PIL import Image
 import imagehash
 from tqdm import tqdm
 
-# Define folder paths
-base_folder = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the script
-source_folder = os.path.join(base_folder, "rawpictures")
-filtered_folder = os.path.join(source_folder, "FilteredImages")
+# Folder paths
+source_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "FilteredImages")
 duplicates_folder = os.path.join(source_folder, "duplicates")
 
-# Create folders if they don't exist
-os.makedirs(filtered_folder, exist_ok=True)
+# Create target folder if it doesn't exist
 os.makedirs(duplicates_folder, exist_ok=True)
-
-# Blur threshold
-BLUR_THRESHOLD = 20.0
 
 # Threshold for image similarity
 HASH_DIFF_THRESHOLD = 8  
 
-def is_blurry_center(image):
-    """
-    Check if the center of the image is blurry using the Laplacian variance.
-    """
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    h, w = gray.shape
-    x_start = int(w * 0.375)
-    y_start = int(h * 0.375)
-    x_end = int(w * 0.625)
-    y_end = int(h * 0.625)
-    center = gray[y_start:y_end, x_start:x_end]
-    return cv2.Laplacian(center, cv2.CV_64F).var() < BLUR_THRESHOLD
-
+# Helper function to check for duplicate images
 def is_similar_image(image1_hash, seen_hashes, threshold):
-    """
-    Check if an image is similar to previously seen images based on perceptual hashing.
-    """
     for saved_hash in seen_hashes:
         if abs(image1_hash - saved_hash) <= threshold:
             return True
     return False
 
-def filter_sharp_images():
-    """
-    Filter images based on sharpness and save only sharp images.
-    """
-    image_extensions = [".png", ".jpg", ".jpeg"]
-    files = [f for f in os.listdir(source_folder) if os.path.splitext(f)[1].lower() in image_extensions]
-
-    for file in tqdm(files, desc="Filtering sharp images"):
-        filepath = os.path.join(source_folder, file)
-        image = cv2.imread(filepath)
-
-        if image is None:
-            print(f"⚠️ Unable to read {file}, skipping.")
-            continue
-
-        if not is_blurry_center(image):
-            cv2.imwrite(os.path.join(filtered_folder, file), image)
-
-    print("🎉 Filtering completed!")
-
+# Compare images, rename them, and sort them into folders of 1000 images each
 def compare_and_move_images():
-    """
-    Compare images, rename them, and sort them into folders of 1000 images each.
-    """
     image_list = [f for f in os.listdir(source_folder) if f.lower().endswith(".png")]
     seen_hashes = []
     duplicate_count = 1
@@ -111,8 +67,4 @@ def compare_and_move_images():
             print(f"❌ Error with {filename}: {e}")
 
 if __name__ == "__main__":
-    try:
-        filter_sharp_images()
-        compare_and_move_images()
-    except Exception as e:
-        print(f"💥 Error during processing: {e}")
+    compare_and_move_images()

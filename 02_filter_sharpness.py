@@ -1,6 +1,7 @@
 # This script filters images based on their sharpness using the Laplacian variance method.
 # It checks the center of each image and saves only the sharp images to a new folder.
 
+
 import cv2
 import os
 from tqdm import tqdm

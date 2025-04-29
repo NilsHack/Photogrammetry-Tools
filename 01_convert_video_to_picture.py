@@ -1,3 +1,9 @@
+# This script converts videos to images using FFmpeg.
+# It extracts frames from each video and saves them in a specified output folder.
+
+import os
+import subprocess
+
 # Define source and output folders
 base_folder = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the script
 source_folder = os.path.join(base_folder, "rawvideos")
